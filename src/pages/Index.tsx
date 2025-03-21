@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { menuData, Dish, getPopularDishes } from '../data/menu';
 import Header from '../components/Header';
 import MenuCategory from '../components/MenuCategory';
+import DishCard from '../components/DishCard';
 import DishModal from '../components/DishModal';
 import Cart from '../components/Cart';
 import { Utensils, TrendingUp } from 'lucide-react';
