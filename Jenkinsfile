@@ -1,45 +1,54 @@
-
 pipeline {
     agent any
     
     environment {
-        DOCKER_IMAGE = 'dosa-delight'
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        IMAGE_NAME = "docker.io/prabha20/dosa-delight"
+        IMAGE_TAG = "latest"
+        REGISTRY = "docker.io" // Using Docker Hub
+        DOCKER_USER = "prabha20"
+        DOCKER_PASS = "Ranjith@1311"
     }
-    
+
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
-        
-        stage('Install Dependencies') {
+
+        stage('Build Docker Image') {
             steps {
-                sh 'npm ci'
+                script {
+                    sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                }
             }
         }
-        
-        stage('Build') {
+
+        stage('Login to Docker Hub') {
             steps {
-                sh 'npm run build'
+                script {
+                    sh 'echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin'
+                }
             }
         }
-        
-        stage('Docker Build') {
+
+        stage('Push Docker Image') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} -t ${DOCKER_IMAGE}:latest ."
+                script {
+                    sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
+                }
             }
         }
-        
-        stage('Deploy') {
+
+        stage('Deploy with Docker') {
             steps {
-                sh "docker-compose down || true"
-                sh "docker-compose up -d"
+                script {
+                    sh 'docker run -d -p 8083:82 ${IMAGE_NAME}:${IMAGE_TAG}'
+                }
             }
         }
     }
-    
+
     post {
         success {
             echo 'Deployment successful!'
@@ -48,8 +57,7 @@ pipeline {
             echo 'Build or deployment failed!'
         }
         always {
-            // Clean up old images to prevent disk space issues
-            sh "docker image prune -f"
+            sh 'docker image prune -f'
         }
     }
 }
